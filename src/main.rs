@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate clap;
 
-use clap::{App, Arg, AppSettings};
+use clap::{App, AppSettings, Arg};
 use std::collections;
 use std::env;
 use std::fs;
