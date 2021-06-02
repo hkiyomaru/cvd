@@ -104,6 +104,10 @@ fn main() {
     };
     let mut gpu_uuids: Vec<String> = gpu_uuids.into_iter().collect();
     gpu_uuids.sort();
+    if gpu_uuids.len() == 0 {
+        log::error!("no available GPUs");
+        process::exit(1);
+    }
     if n > 0 {
         if n > gpu_uuids.len() {
             log::error!(
