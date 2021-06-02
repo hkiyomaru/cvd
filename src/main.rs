@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate clap;
 
-use clap::{App, Arg};
+use clap::{App, Arg, AppSettings};
 use std::collections;
 use std::env;
 use std::fs;
@@ -64,8 +64,8 @@ fn parse_output(
 
 fn main() {
     let matches = App::new("cvd")
+        .setting(AppSettings::ColoredHelp)
         .version(crate_version!())
-        .author("Hirokazu Kiyomaru <h.kiyomaru@gmail.com>")
         .about("Show CUDA visible devices")
         .arg(
             Arg::with_name("n")
