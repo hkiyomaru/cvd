@@ -106,7 +106,11 @@ fn main() {
     gpu_uuids.sort();
     if n > 0 {
         if n > gpu_uuids.len() {
-            log::error!("{} exceeds the number of GPUs, {}", n, gpu_uuids.len());
+            log::error!(
+                "{} exceeds the number of available GPUs, {}",
+                n,
+                gpu_uuids.len()
+            );
             process::exit(1);
         }
         gpu_uuids.truncate(n);
