@@ -105,7 +105,7 @@ fn main() {
     let mut gpu_uuids: Vec<String> = gpu_uuids.into_iter().collect();
     gpu_uuids.sort();
     if n > 0 {
-        if gpu_uuids.len() > n {
+        if n > gpu_uuids.len() {
             log::error!("{} exceeds the number of GPUs, {}", n, gpu_uuids.len());
             process::exit(1);
         }
