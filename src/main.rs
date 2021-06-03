@@ -84,16 +84,14 @@ fn main() {
 
     env_logger::init();
 
-    let n = value_t!(matches, "n", usize).unwrap_or(0);
-
-    let empty_only = matches.is_present("empty_only");
-
     if !is_avail() {
         log::error!("command not found: {}", NVSMI);
         process::exit(1);
     }
+
     let gpu_uuids = get_gpu_uuids();
-    let gpu_uuids = if empty_only {
+
+    let gpu_uuids = if matches.is_present("empty_only") {
         let used_gpu_uuids = get_used_gpu_uuids();
         gpu_uuids
             .difference(&used_gpu_uuids)
@@ -104,20 +102,22 @@ fn main() {
     };
     let mut gpu_uuids: Vec<String> = gpu_uuids.into_iter().collect();
     gpu_uuids.sort();
+
     if gpu_uuids.len() == 0 {
         log::error!("no available GPUs");
         process::exit(1);
     }
-    if n > 0 {
-        if n > gpu_uuids.len() {
-            log::error!(
-                "{} exceeds the number of available GPUs, {}",
-                n,
-                gpu_uuids.len()
-            );
-            process::exit(1);
-        }
-        gpu_uuids.truncate(n);
+
+    let n = value_t!(matches, "n", usize).unwrap_or(gpu_uuids.len());
+
+    if n > gpu_uuids.len() {
+        log::error!(
+            "{} exceeds the number of available GPUs, {}",
+            n,
+            gpu_uuids.len()
+        );
+        process::exit(1);
     }
+    gpu_uuids.truncate(n);
     println!("{}", gpu_uuids.join(","));
 }
