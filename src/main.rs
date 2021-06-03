@@ -1,10 +1,9 @@
-use clap::{App, AppSettings, Arg, value_t, crate_version};
-use std::collections;
+use clap::{crate_version, value_t, App, AppSettings, Arg};
+use std::collections::HashSet;
 use std::env;
 use std::fs;
 use std::io;
 use std::process;
-use std::result;
 use std::str;
 
 const NVSMI: &str = "nvidia-smi";
@@ -21,7 +20,7 @@ fn is_avail() -> bool {
     false
 }
 
-fn get_gpu_uuids() -> collections::HashSet<String> {
+fn get_gpu_uuids() -> HashSet<String> {
     let output = process::Command::new(NVSMI)
         .arg("--query-gpu=uuid")
         .arg("--format=csv,noheader")
@@ -29,7 +28,7 @@ fn get_gpu_uuids() -> collections::HashSet<String> {
     parse_output(output)
 }
 
-fn get_used_gpu_uuids() -> collections::HashSet<String> {
+fn get_used_gpu_uuids() -> HashSet<String> {
     let output = process::Command::new(NVSMI)
         .arg("--query-compute-apps=gpu_uuid")
         .arg("--format=csv,noheader")
@@ -37,9 +36,7 @@ fn get_used_gpu_uuids() -> collections::HashSet<String> {
     parse_output(output)
 }
 
-fn parse_output(
-    output: result::Result<process::Output, io::Error>,
-) -> collections::HashSet<String> {
+fn parse_output(output: io::Result<process::Output>) -> HashSet<String> {
     let output = match output {
         Ok(output) => output,
         Err(_) => {
@@ -55,11 +52,13 @@ fn parse_output(
             process::exit(1);
         }
     };
-    let uuids: collections::HashSet<String> = stdout.lines().map(String::from).collect();
+    let uuids: HashSet<String> = stdout.lines().map(String::from).collect();
     uuids
 }
 
 fn main() {
+    env_logger::init();
+
     let matches = App::new("cvd")
         .setting(AppSettings::ColoredHelp)
         .version(crate_version!())
@@ -78,8 +77,6 @@ fn main() {
                 .help("Shows empty devices"),
         )
         .get_matches();
-
-    env_logger::init();
 
     if !is_avail() {
         log::error!("command not found: {}", NVSMI);
@@ -100,21 +97,19 @@ fn main() {
     let mut gpu_uuids: Vec<String> = gpu_uuids.into_iter().collect();
     gpu_uuids.sort();
 
-    if gpu_uuids.len() == 0 {
+    let n_avail = gpu_uuids.len();
+    if n_avail == 0 {
         log::error!("no available GPUs");
         process::exit(1);
     }
 
-    let n = value_t!(matches, "n", usize).unwrap_or(gpu_uuids.len());
-
-    if n > gpu_uuids.len() {
-        log::error!(
-            "{} exceeds the number of available GPUs, {}",
-            n,
-            gpu_uuids.len()
-        );
+    let n = value_t!(matches, "n", usize).unwrap_or(n_avail);
+    if n > n_avail {
+        log::error!("{} exceeds the number of available GPUs, {}", n, n_avail);
         process::exit(1);
     }
+
     gpu_uuids.truncate(n);
+
     println!("{}", gpu_uuids.join(","));
 }
